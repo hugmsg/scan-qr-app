@@ -40,6 +40,17 @@ async function saveOffline(data) {
   tx.onerror = e => log("Erreur sauvegarde DB : " + e);
 }
 
+// -------- DELETE ITEM SÉCURISÉ --------
+function deleteItem(db, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("queue", "readwrite");
+    const store = tx.objectStore("queue");
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e);
+  });
+}
+
 // -------- TRY SEND --------
 async function trySend() {
   if (!navigator.onLine) return log("Offline, envoi différé");
@@ -64,7 +75,7 @@ async function trySend() {
       });
       if (res.ok) {
         log("Envoi réussi : " + item.qr);
-        store.delete(item.id);
+        await deleteItem(db, item.id); // <-- suppression attendue
       } else {
         log("Erreur fetch : " + res.status);
       }
@@ -87,7 +98,7 @@ async function send() {
   };
 
   await saveOffline(payload);
-  await trySend(); // envoi immédiat si online
+  await trySend(); // tentative immédiate si online
 
   currentQR = null; // <-- reset pour éviter envoi fantôme
   const resultDiv = document.getElementById("result");
@@ -98,7 +109,7 @@ async function send() {
 function startScan() {
   html5QrcodeScanner = new Html5Qrcode("qr-reader");
   html5QrcodeScanner.start(
-    { facingMode: "environment" }, 
+    { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     qrCodeMessage => {
       currentQR = qrCodeMessage;
