@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzUgSDV_7MJsXy9LVDwESOTTtKlEveJtQvv88nNKVTi7iU0PFe56C7gw4gA9fSARffleQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxuh_DII_8XC07Fk85gD1gdk9_FSLNZvFswKV3fAvs6_qAwLiNjkx3kxaXcWHRjt0f4QA/exec";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 let html5QrcodeScanner;
@@ -112,6 +112,7 @@ function log(msg){
   const logDiv = document.getElementById("log");
   logDiv.innerHTML += msg + "<br>";
 }
+
 
 
 
