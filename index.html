@@ -5,15 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scan QR</title>
 <link rel="manifest" href="manifest.json">
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+  #qr-reader { width: 100%; max-width: 400px; margin: auto; }
+  button { font-size: 18px; padding: 10px 20px; margin-top: 10px; }
+</style>
 </head>
 
 <body>
 <h2>Scanner un QR</h2>
 
-<video id="video" width="100%" autoplay></video>
-<button onclick="startScan()">Scanner</button>
+<div id="qr-reader"></div>
+<p id="result">Aucun QR scanné</p>
 
-<p id="result"></p>
+<button onclick="startScan()">Scanner</button>
 <button onclick="send()">Envoyer</button>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
