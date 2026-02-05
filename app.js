@@ -1,4 +1,4 @@
-const GAS_URL = "URL_DU_WEB_APP_ICI";
+const GAS_URL = "https://docs.google.com/spreadsheets/d/10bQAK5nY-Q63ob-er_pfIIv-IN5hqtooEvVQ7quj5lI/edit?gid=0#gid=0";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 
@@ -70,3 +70,4 @@ function openDB() {
     req.onerror = reject;
   });
 }
+
