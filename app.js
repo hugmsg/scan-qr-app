@@ -134,3 +134,5 @@ window.addEventListener("load", async () => {
   await clearQueueOnStart();
   log("App démarrée");
 });
+const VERSION = "1.1.1"; // augmente à chaque update
+log("App version " + VERSION);
