@@ -1,22 +1,34 @@
 const GAS_URL = "https://docs.google.com/spreadsheets/d/10bQAK5nY-Q63ob-er_pfIIv-IN5hqtooEvVQ7quj5lI/edit?gid=0#gid=0";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
+let html5QrcodeScanner;
 
+// ----------- START SCAN ----------------
 function startScan() {
-  const scanner = new Html5Qrcode("video");
-  scanner.start(
-    { facingMode: "environment" },
+  html5QrcodeScanner = new Html5Qrcode("qr-reader");
+
+  html5QrcodeScanner.start(
+    { facingMode: "environment" }, // caméra arrière
     { fps: 10, qrbox: 250 },
-    qr => {
-      currentQR = qr;
-      document.getElementById("result").innerText = qr;
-      scanner.stop();
+    qrCodeMessage => {
+      currentQR = qrCodeMessage;
+      document.getElementById("result").innerText = qrCodeMessage;
+      html5QrcodeScanner.stop(); // stop après scan réussi
+    },
+    errorMessage => {
+      // console.log("Scan error", errorMessage);
     }
-  );
+  ).catch(err => console.error("Impossible de démarrer le scan", err));
 }
 
+// ----------- STOP SCAN ----------------
+function stopScan() {
+  if (html5QrcodeScanner) html5QrcodeScanner.stop();
+}
+
+// ----------- ENVOI ----------------
 async function send() {
-  if (!currentQR) return alert("Aucun QR");
+  if (!currentQR) return alert("Aucun QR scanné");
 
   const payload = {
     qr: currentQR,
@@ -29,11 +41,15 @@ async function send() {
   trySend();
 }
 
+// ----------- OFFLINE STORAGE ----------------
 async function saveOffline(data) {
   const db = await openDB();
-  db.add("queue", data);
+  const tx = db.transaction("queue", "readwrite");
+  tx.objectStore("queue").add(data);
+  await tx.complete;
 }
 
+// ----------- TRY SEND ----------------
 async function trySend() {
   if (!navigator.onLine) return;
 
@@ -50,24 +66,22 @@ async function trySend() {
       });
       store.delete(item.id);
     } catch {
-      break;
+      break; // réseau indisponible, réessaie plus tard
     }
   }
 }
 
-window.addEventListener("online", trySend);
-
+// ----------- OFFLINE DB ----------------
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open("scanDB", 1);
-    req.onupgradeneeded = e => {
-      e.target.result.createObjectStore("queue", {
-        keyPath: "id",
-        autoIncrement: true
-      });
+    const request = indexedDB.open("scanDB", 1);
+    request.onupgradeneeded = e => {
+      e.target.result.createObjectStore("queue", { keyPath: "id", autoIncrement: true });
     };
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror = reject;
+    request.onsuccess = e => resolve(e.target.result);
+    request.onerror = reject;
   });
 }
 
+// ----------- SYNC AUTOMATIQUE QUAND ONLINE ----------------
+window.addEventListener("online", trySend);
