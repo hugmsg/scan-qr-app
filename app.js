@@ -51,25 +51,40 @@ async function saveOffline(data) {
 
 // ----------- TRY SEND ----------------
 async function trySend() {
-  if (!navigator.onLine) return;
+  if (!navigator.onLine) return log("Offline, envoi différé");
 
   const db = await openDB();
   const tx = db.transaction("queue", "readwrite");
   const store = tx.objectStore("queue");
-  const all = await store.getAll();
+
+  // récupérer tous les items avec une promesse
+  const all = await new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = e => reject(e);
+  });
+
+  log("Scans à envoyer : " + all.length);
 
   for (const item of all) {
     try {
-      await fetch(GAS_URL, {
+      const res = await fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify(item)
       });
-      store.delete(item.id);
-    } catch {
-      break; // réseau indisponible, réessaie plus tard
+      if (res.ok) {
+        log("Envoi réussi : " + item.qr);
+        store.delete(item.id);
+      } else {
+        log("Erreur fetch : " + res.status);
+      }
+    } catch (err) {
+      log("Impossible d'envoyer, réseau ? " + err);
+      break; // réessaiera plus tard
     }
   }
 }
+
 
 // ----------- OFFLINE DB ----------------
 function openDB() {
@@ -97,6 +112,7 @@ function log(msg){
   const logDiv = document.getElementById("log");
   logDiv.innerHTML += msg + "<br>";
 }
+
 
 
 
