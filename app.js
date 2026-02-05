@@ -85,3 +85,11 @@ function openDB() {
 
 // ----------- SYNC AUTOMATIQUE QUAND ONLINE ----------------
 window.addEventListener("online", trySend);
+
+async function testDB() {
+  const db = await openDB();
+  console.log("DB ouverte :", db);
+}
+testDB();
+
+
