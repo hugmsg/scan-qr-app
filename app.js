@@ -16,7 +16,7 @@ function startScan() {
       html5QrcodeScanner.stop(); // stop après scan réussi
     },
     errorMessage => {
-      // console.log("Scan error", errorMessage);
+      // log("Scan error", errorMessage);
     }
   ).catch(err => console.error("Impossible de démarrer le scan", err));
 }
@@ -88,8 +88,15 @@ window.addEventListener("online", trySend);
 
 async function testDB() {
   const db = await openDB();
-  console.log("DB ouverte :", db);
+  log("DB ouverte :", db);
 }
 testDB();
+
+function log(msg){
+  console.log(msg);
+  const logDiv = document.getElementById("log");
+  logDiv.innerHTML += msg + "<br>";
+}
+
 
 
