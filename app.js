@@ -2,54 +2,45 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxuh_DII_8XC07Fk85gD1gd
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 let html5QrcodeScanner;
-
-// ----------- START SCAN ----------------
-function startScan() {
-  html5QrcodeScanner = new Html5Qrcode("qr-reader");
-
-  html5QrcodeScanner.start(
-    { facingMode: "environment" }, // caméra arrière
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      currentQR = qrCodeMessage;
-      document.getElementById("result").innerText = qrCodeMessage;
-      html5QrcodeScanner.stop(); // stop après scan réussi
-    },
-    errorMessage => {
-      // log("Scan error", errorMessage);
-    }
-  ).catch(err => console.error("Impossible de démarrer le scan", err));
+// -------- LOG SUR PAGE --------
+function log(msg) {
+  console.log(msg);
+  const logDiv = document.getElementById("log");
+  if (logDiv) logDiv.innerHTML += msg + "<br>";
 }
 
-// ----------- STOP SCAN ----------------
-function stopScan() {
-  if (html5QrcodeScanner) html5QrcodeScanner.stop();
+// -------- INDEXEDDB --------
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("scanDB", 1);
+    request.onupgradeneeded = e => {
+      e.target.result.createObjectStore("queue", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = e => resolve(e.target.result);
+    request.onerror = reject;
+  });
 }
 
-// ----------- ENVOI ----------------
-async function send() {
-  if (!currentQR) return alert("Aucun QR scanné");
-
-  const payload = {
-    qr: currentQR,
-    user: USER,
-    device: navigator.userAgent,
-    date: new Date().toISOString()
-  };
-
-  await saveOffline(payload);
-  trySend();
+// -------- CLEAR QUEUE AU DEMARRAGE --------
+async function clearQueueOnStart() {
+  const db = await openDB();
+  const tx = db.transaction("queue", "readwrite");
+  const store = tx.objectStore("queue");
+  store.clear();
+  tx.oncomplete = () => log("Queue vidée au démarrage");
 }
 
-// ----------- OFFLINE STORAGE ----------------
+// -------- SAVE OFFLINE --------
 async function saveOffline(data) {
   const db = await openDB();
   const tx = db.transaction("queue", "readwrite");
-  tx.objectStore("queue").add(data);
-  await tx.complete;
+  const store = tx.objectStore("queue");
+  store.add(data);
+  tx.oncomplete = () => log("Scan sauvegardé offline : " + data.qr);
+  tx.onerror = e => log("Erreur sauvegarde DB : " + e);
 }
 
-// ----------- TRY SEND ----------------
+// -------- TRY SEND --------
 async function trySend() {
   if (!navigator.onLine) return log("Offline, envoi différé");
 
@@ -57,7 +48,6 @@ async function trySend() {
   const tx = db.transaction("queue", "readwrite");
   const store = tx.objectStore("queue");
 
-  // récupérer tous les items avec une promesse
   const all = await new Promise((resolve, reject) => {
     const req = store.getAll();
     req.onsuccess = () => resolve(req.result || []);
@@ -80,41 +70,56 @@ async function trySend() {
       }
     } catch (err) {
       log("Impossible d'envoyer, réseau ? " + err);
-      break; // réessaiera plus tard
+      break;
     }
   }
 }
 
+// -------- SEND (bouton) --------
+async function send() {
+  if (!currentQR) return alert("Aucun QR scanné");
 
-// ----------- OFFLINE DB ----------------
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("scanDB", 1);
-    request.onupgradeneeded = e => {
-      e.target.result.createObjectStore("queue", { keyPath: "id", autoIncrement: true });
-    };
-    request.onsuccess = e => resolve(e.target.result);
-    request.onerror = reject;
-  });
+  const payload = {
+    qr: currentQR,
+    user: USER,
+    device: navigator.userAgent,
+    date: new Date().toISOString()
+  };
+
+  await saveOffline(payload);
+  await trySend(); // envoi immédiat si online
+
+  currentQR = null; // <-- reset pour éviter envoi fantôme
+  const resultDiv = document.getElementById("result");
+  if (resultDiv) resultDiv.innerText = "Aucun QR scanné";
 }
 
-// ----------- SYNC AUTOMATIQUE QUAND ONLINE ----------------
+// -------- START SCAN --------
+function startScan() {
+  html5QrcodeScanner = new Html5Qrcode("qr-reader");
+  html5QrcodeScanner.start(
+    { facingMode: "environment" }, 
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+      currentQR = qrCodeMessage;
+      const resultDiv = document.getElementById("result");
+      if (resultDiv) resultDiv.innerText = qrCodeMessage;
+      html5QrcodeScanner.stop();
+    },
+    errorMessage => { /* ignore les erreurs */ }
+  ).catch(err => log("Impossible de démarrer le scan : " + err));
+}
+
+// -------- STOP SCAN (facultatif) --------
+function stopScan() {
+  if (html5QrcodeScanner) html5QrcodeScanner.stop();
+}
+
+// -------- SYNC AUTOMATIQUE QUAND ONLINE --------
 window.addEventListener("online", trySend);
 
-async function testDB() {
-  const db = await openDB();
-  log("DB ouverte :", db);
-}
-testDB();
-
-function log(msg){
-  console.log(msg);
-  const logDiv = document.getElementById("log");
-  logDiv.innerHTML += msg + "<br>";
-}
-
-
-
-
-
-
+// -------- DEMARRAGE DE L'APP --------
+window.addEventListener("load", async () => {
+  await clearQueueOnStart();
+  log("App démarrée");
+});
