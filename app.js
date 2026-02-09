@@ -71,6 +71,9 @@ async function trySend() {
     try {
       const res = await fetch(GAS_URL, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(item)
       });
       if (res.ok) {
@@ -200,8 +203,9 @@ function fileToBase64(file, maxWidth = 1280, quality = 0.7) {
   });
 }
 
-const VERSION = "1.2.4"; // augmente à chaque update
+const VERSION = "1.2.5"; // augmente à chaque update
 log("App version " + VERSION);
+
 
 
 
