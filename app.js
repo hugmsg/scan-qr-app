@@ -136,3 +136,30 @@ window.addEventListener("load", async () => {
 });
 const VERSION = "1.1.1"; // augmente à chaque update
 log("App version " + VERSION);
+
+function takePhoto() {
+  document.getElementById("photoInput").click();
+}
+
+document.getElementById("photoInput").addEventListener("change", async (e) => {
+  const files = e.target.files;
+
+  for (const file of files) {
+    const base64 = await fileToBase64(file);
+
+    const payload = {
+      type: "photo",
+      user: USER,
+      device: navigator.userAgent,
+      date: new Date().toISOString(),
+      filename: file.name,
+      image: base64
+    };
+
+    await saveOffline(payload);
+    log("Photo ajoutée à la queue : " + file.name);
+  }
+
+  await trySend();
+});
+
