@@ -203,8 +203,9 @@ function fileToBase64(file, maxWidth = 1280, quality = 0.7) {
   });
 }
 
-const VERSION = "1.2.6"; // augmente à chaque update
+const VERSION = "1.2.7"; // augmente à chaque update
 log("App version " + VERSION);
+
 
 
 
