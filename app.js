@@ -149,8 +149,8 @@ document.getElementById("photoInput").addEventListener("change", async (e) => {
 
   for (const file of files) {
     const base64 = await fileToBase64(file);
-if (file.size > 1_500_000) {
-  alert("Photo trop lourde (max 1,5 Mo)");
+if (file.size > 3_500_000) {
+  alert("Photo trop lourde (max 3,5 Mo)");
   continue;
 }
 
@@ -203,8 +203,9 @@ function fileToBase64(file, maxWidth = 1280, quality = 0.7) {
   });
 }
 
-const VERSION = "1.2.7"; // augmente à chaque update
+const VERSION = "1.2.8"; // augmente à chaque update
 log("App version " + VERSION);
+
 
 
 
