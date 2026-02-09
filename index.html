@@ -20,10 +20,20 @@
 
 <button onclick="startScan()">Scanner</button>
 <button onclick="send()">Envoyer</button>
+<button onclick="takePhoto()">📸 Photo</button>
+  <input 
+  type="file" 
+  id="photoInput" 
+  accept="image/*" 
+  capture="environment" 
+  multiple 
+  style="display:none"
+/>
 <div id="log" style="text-align:left; max-height:200px; overflow:auto; border:1px solid #ccc; margin-top:10px;"></div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="app.js"></script>
 </body>
 </html>
+
 
