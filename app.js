@@ -135,7 +135,7 @@ window.addEventListener("load", async () => {
   await clearQueueOnStart();
   log("App démarrée");
 });
-const VERSION = "1.1.1"; // augmente à chaque update
+const VERSION = "1.2.2"; // augmente à chaque update
 log("App version " + VERSION);
 
 function takePhoto() {
@@ -172,6 +172,7 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+
 
 
 
