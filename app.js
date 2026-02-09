@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxuh_DII_8XC07Fk85gD1gdk9_FSLNZvFswKV3fAvs6_qAwLiNjkx3kxaXcWHRjt0f4QA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxHkHnTXVwaHAYhENpjS0R0SuMl7tuNMdEIATRltaDBGXAilur_l5vYf98iCXWx5EIGQA/exec";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 let html5QrcodeScanner;
@@ -91,6 +91,7 @@ async function send() {
   if (!currentQR) return alert("Aucun QR scanné");
 
   const payload = {
+    type: "qr",
     qr: currentQR,
     user: USER,
     device: navigator.userAgent,
@@ -171,4 +172,5 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+
 
