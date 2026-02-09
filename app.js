@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxHkHnTXVwaHAYhENpjS0R0SuMl7tuNMdEIATRltaDBGXAilur_l5vYf98iCXWx5EIGQA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxUIV0kCza2vpeZRTC37KySwYNOC1z6xreo_tZXSdDUL5TIOHawTwmerFmixiZ07Pf7Cg/exec";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 let html5QrcodeScanner;
@@ -172,5 +172,6 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+
 
 
