@@ -1,199 +1,190 @@
+/***********************
+ * CONFIGURATION
+ ***********************/
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxUIV0kCza2vpeZRTC37KySwYNOC1z6xreo_tZXSdDUL5TIOHawTwmerFmixiZ07Pf7Cg/exec";
+const USER = "utilisateur_1";
+const VERSION = "2.0.0";
+
+/***********************
+ * ETAT
+ ***********************/
 let currentQR = null;
-const USER = "utilisateur_1"; // à changer par appareil
-let html5QrcodeScanner;
-// -------- LOG SUR PAGE --------
+let html5QrcodeScanner = null;
+
+/***********************
+ * LOG VISIBLE
+ ***********************/
 function log(msg) {
   console.log(msg);
-  const logDiv = document.getElementById("log");
-  if (logDiv) logDiv.innerHTML += msg + "<br>";
+  const div = document.getElementById("log");
+  if (div) div.innerHTML += msg + "<br>";
 }
 
-// -------- INDEXEDDB --------
+/***********************
+ * INDEXED DB
+ ***********************/
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("scanDB", 1);
-    request.onupgradeneeded = e => {
-      e.target.result.createObjectStore("queue", { keyPath: "id", autoIncrement: true });
+    const req = indexedDB.open("scanDB", 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore("queue", {
+        keyPath: "id",
+        autoIncrement: true
+      });
     };
-    request.onsuccess = e => resolve(e.target.result);
-    request.onerror = reject;
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = reject;
   });
 }
 
-// -------- CLEAR QUEUE AU DEMARRAGE --------
-async function clearQueueOnStart() {
-  const db = await openDB();
-  const tx = db.transaction("queue", "readwrite");
-  const store = tx.objectStore("queue");
-  store.clear();
-  tx.oncomplete = () => log("Queue vidée au démarrage");
-}
-
-// -------- SAVE OFFLINE --------
 async function saveOffline(data) {
   const db = await openDB();
   const tx = db.transaction("queue", "readwrite");
-  const store = tx.objectStore("queue");
-  store.add(data);
-  tx.oncomplete = () => log("Scan sauvegardé offline : " + data.qr);
-  tx.onerror = e => log("Erreur sauvegarde DB : " + e);
+  tx.objectStore("queue").add(data);
+  tx.oncomplete = () =>
+    log("Sauvegardé offline : " + (data.qr || data.filename));
 }
 
-// -------- DELETE ITEM SÉCURISÉ --------
 function deleteItem(db, id) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction("queue", "readwrite");
-    const store = tx.objectStore("queue");
-    const req = store.delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = e => reject(e);
+    const req = tx.objectStore("queue").delete(id);
+    req.onsuccess = resolve;
+    req.onerror = reject;
   });
 }
 
-// -------- TRY SEND --------
+/***********************
+ * ENVOI SERVEUR
+ ***********************/
 async function trySend() {
-  if (!navigator.onLine) return log("Offline, envoi différé");
+  if (!navigator.onLine) {
+    log("Offline, envoi différé");
+    return;
+  }
 
   const db = await openDB();
-  const tx = db.transaction("queue", "readwrite");
-  const store = tx.objectStore("queue");
+  const store = db.transaction("queue", "readonly").objectStore("queue");
 
-  const all = await new Promise((resolve, reject) => {
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = e => reject(e);
+  const items = await new Promise(res => {
+    const r = store.getAll();
+    r.onsuccess = () => res(r.result || []);
   });
 
-  log("Scans à envoyer : " + all.length);
+  log("Éléments à envoyer : " + items.length);
 
-  for (const item of all) {
+  for (const item of items) {
     try {
-      const res = await fetch(GAS_URL, {
+      const response = await fetch(GAS_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item)
       });
-      if (res.ok) {
-        log("Envoi réussi : " + item.qr);
-        await deleteItem(db, item.id); // <-- suppression attendue
-      } else {
-        log("Erreur fetch : " + res.status);
+
+      if (!response.ok) {
+        log("Erreur serveur : " + response.status);
+        return;
       }
+
+      await deleteItem(db, item.id);
+      log("Envoyé : " + (item.qr || item.filename));
     } catch (err) {
-      log("Impossible d'envoyer, réseau ? " + err);
-      break;
+      log("Fetch échoué : " + err.message);
+      return;
     }
   }
 }
 
-// -------- SEND (bouton) --------
-async function send() {
-  if (!currentQR) return alert("Aucun QR scanné");
-
-  const payload = {
-    type: "qr",
-    qr: currentQR,
-    user: USER,
-    device: navigator.userAgent,
-    date: new Date().toISOString()
-  };
-
-  await saveOffline(payload);
-  await trySend(); // tentative immédiate si online
-
-  currentQR = null; // <-- reset pour éviter envoi fantôme
-  const resultDiv = document.getElementById("result");
-  if (resultDiv) resultDiv.innerText = "Aucun QR scanné";
-}
-
-// -------- START SCAN --------
+/***********************
+ * QR CODE
+ ***********************/
 function startScan() {
   html5QrcodeScanner = new Html5Qrcode("qr-reader");
   html5QrcodeScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      currentQR = qrCodeMessage;
-      const resultDiv = document.getElementById("result");
-      if (resultDiv) resultDiv.innerText = qrCodeMessage;
+    qr => {
+      currentQR = qr;
+      document.getElementById("result").innerText = qr;
       html5QrcodeScanner.stop();
-    },
-    errorMessage => { /* ignore les erreurs */ }
-  ).catch(err => log("Impossible de démarrer le scan : " + err));
+    }
+  );
 }
 
-// -------- STOP SCAN (facultatif) --------
-function stopScan() {
-  if (html5QrcodeScanner) html5QrcodeScanner.stop();
+async function sendQR() {
+  if (!currentQR) {
+    alert("Aucun QR scanné");
+    return;
+  }
+
+  await saveOffline({
+    type: "qr",
+    qr: currentQR,
+    user: USER,
+    device: navigator.userAgent,
+    date: new Date().toISOString()
+  });
+
+  currentQR = null;
+  document.getElementById("result").innerText = "Aucun QR scanné";
+
+  await trySend();
 }
 
-// -------- SYNC AUTOMATIQUE QUAND ONLINE --------
-window.addEventListener("online", trySend);
-
-// -------- DEMARRAGE DE L'APP --------
-window.addEventListener("load", async () => {
-  await clearQueueOnStart();
-  log("App démarrée");
-});
-
-
+/***********************
+ * PHOTO
+ ***********************/
 function takePhoto() {
   document.getElementById("photoInput").click();
 }
 
-document.getElementById("photoInput").addEventListener("change", async (e) => {
-  const files = e.target.files;
+document.getElementById("photoInput").addEventListener("change", async e => {
+  for (const file of e.target.files) {
 
-  for (const file of files) {
-    const base64 = await fileToBase64(file);
-if (file.size > 3_500_000) {
-  alert("Photo trop lourde (max 3,5 Mo)");
-  continue;
-}
+    // 🔒 limite taille AVANT traitement
+    if (file.size > 3_000_000) {
+      alert("Photo trop lourde (>3 Mo)");
+      continue;
+    }
 
-    const payload = {
+    const base64 = await compressToBase64(file);
+
+    await saveOffline({
       type: "photo",
+      filename: file.name,
+      image: base64,
       user: USER,
       device: navigator.userAgent,
-      date: new Date().toISOString(),
-      filename: file.name,
-      image: base64
-    };
-
-    await saveOffline(payload);
-    log("Photo ajoutée à la queue : " + file.name);
+      date: new Date().toISOString()
+    });
   }
 
   await trySend();
 });
 
-function fileToBase64(file, maxWidth = 1280, quality = 0.7) {
+/***********************
+ * COMPRESSION PHOTO
+ ***********************/
+function compressToBase64(file, maxWidth = 1280, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
 
     reader.onload = e => {
       img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
         const canvas = document.createElement("canvas");
-        const scale = Math.min(maxWidth / img.width, 1);
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
 
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        canvas.toBlob(
-          blob => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result.split(",")[1]);
-            r.readAsDataURL(blob);
-          },
-          "image/jpeg",
-          quality
-        );
+        canvas.toBlob(blob => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result.split(",")[1]);
+          r.readAsDataURL(blob);
+        }, "image/jpeg", quality);
       };
       img.src = e.target.result;
     };
@@ -203,14 +194,11 @@ function fileToBase64(file, maxWidth = 1280, quality = 0.7) {
   });
 }
 
-const VERSION = "1.2.8"; // augmente à chaque update
-log("App version " + VERSION);
+/***********************
+ * EVENTS
+ ***********************/
+window.addEventListener("online", trySend);
 
-
-
-
-
-
-
-
-
+window.addEventListener("load", () => {
+  log("App prête – version " + VERSION);
+});
