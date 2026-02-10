@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw3CgA1weJ4dYonOfULWFNsMy6qf4FKczoWncgaNN_ol7dZpWrpPkXhZGNU4x7eoLOv7A/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTfhWbuhE87MEIi7pDywDJhpLLrAt8KnU4OJR3t_wgLsIjPVR5Ea2F_PyLBVQisM69aA/exec";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 let html5QrcodeScanner;
@@ -136,4 +136,5 @@ window.addEventListener("load", async () => {
 });
 const VERSION = "1.1.1"; // augmente à chaque update
 log("App version " + VERSION);
+
 
