@@ -1,9 +1,9 @@
 /***********************
  * CONFIGURATION
  ***********************/
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxUIV0kCza2vpeZRTC37KySwYNOC1z6xreo_tZXSdDUL5TIOHawTwmerFmixiZ07Pf7Cg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzGKXa2AFXtl8JTjfxgP2NtVP47vOf0KYxvK7gnYOtUR512GqkFhy15dJOSlQ6jkfJAOA/exec";
 const USER = "utilisateur_1";
-const VERSION = "2.0.0";
+const VERSION = "2.0.1";
 
 /***********************
  * ETAT
@@ -202,3 +202,4 @@ window.addEventListener("online", trySend);
 window.addEventListener("load", () => {
   log("App prête – version " + VERSION);
 });
+
