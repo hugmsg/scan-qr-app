@@ -132,10 +132,20 @@ window.addEventListener("online", trySend);
 
 // -------- DEMARRAGE DE L'APP --------
 window.addEventListener("load", async () => {
-  await clearQueueOnStart();
+  //await clearQueueOnStart();
   log("App démarrée");
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => log("Service Worker enregistré"))
+      .catch(err => log("Erreur SW : " + err));
+  });
+}
+
 log("App version " + VERSION);
+
 
 
 
