@@ -96,10 +96,8 @@ async function send() {
     user: USER,
     device: navigator.userAgent,
     date: new Date().toISOString()
-  };
+  };*/
 
-  await saveOffline(payload);
-  await trySend(); // tentative immédiate si online*/
 const prenom = document.getElementById("prenom").value;
   const nom = document.getElementById("nom").value;
   const immat = document.getElementById("immat").value;
@@ -120,6 +118,8 @@ const prenom = document.getElementById("prenom").value;
     device: navigator.userAgent,
     date: new Date().toISOString()
   };
+  await saveOffline(payload);
+  await trySend(); // tentative immédiate si online
   currentQR = null; // <-- reset pour éviter envoi fantôme
   const resultDiv = document.getElementById("result");
   if (resultDiv) resultDiv.innerText = "Aucun QR scanné";
@@ -164,6 +164,7 @@ if ("serviceWorker" in navigator) {
 }
 
 log("App version " + VERSION);
+
 
 
 
