@@ -18,11 +18,20 @@
 <div id="qr-reader"></div>
 <p id="result">Aucun QR scanné</p>
 
+<h3>Informations</h3>
+
+<input type="text" id="prenom" placeholder="Prénom"><br><br>
+<input type="text" id="nom" placeholder="Nom"><br><br>
+<input type="text" id="immat" placeholder="Immatriculation"><br><br>
+<input type="text" id="transporteur" placeholder="Transporteur"><br><br>
+
 <button onclick="startScan()">Scanner</button>
 <button onclick="send()">Envoyer</button>
+
 <div id="log" style="text-align:left; max-height:200px; overflow:auto; border:1px solid #ccc; margin-top:10px;"></div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="app.js"></script>
 </body>
 </html>
+
