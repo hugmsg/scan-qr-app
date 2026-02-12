@@ -91,7 +91,7 @@ async function trySend() {
 async function send() {
   if (!currentQR) return alert("Aucun QR scanné");
 
-  const payload = {
+  /*const payload = {
     qr: currentQR,
     user: USER,
     device: navigator.userAgent,
@@ -99,8 +99,27 @@ async function send() {
   };
 
   await saveOffline(payload);
-  await trySend(); // tentative immédiate si online
+  await trySend(); // tentative immédiate si online*/
+const prenom = document.getElementById("prenom").value;
+  const nom = document.getElementById("nom").value;
+  const immat = document.getElementById("immat").value;
+  const transporteur = document.getElementById("transporteur").value;
 
+  if (!prenom || !nom) {
+    alert("Prénom et nom obligatoires");
+    return;
+  }
+
+  const payload = {
+    qr: currentQR,
+    prenom: prenom,
+    nom: nom,
+    immatriculation: immat,
+    transporteur: transporteur,
+    user: USER,
+    device: navigator.userAgent,
+    date: new Date().toISOString()
+  };
   currentQR = null; // <-- reset pour éviter envoi fantôme
   const resultDiv = document.getElementById("result");
   if (resultDiv) resultDiv.innerText = "Aucun QR scanné";
@@ -145,6 +164,7 @@ if ("serviceWorker" in navigator) {
 }
 
 log("App version " + VERSION);
+
 
 
 
