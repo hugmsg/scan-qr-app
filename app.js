@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxTfhWbuhE87MEIi7pDywDJhpLLrAt8KnU4OJR3t_wgLsIjPVR5Ea2F_PyLBVQisM69aA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzpoj2ssnVZyJhpMkQoWx6KHlyuhXIW-WwYjUi3nB0M1SNbF24UMbjCiIm4tod_DIS2Fw/exec";//https://script.google.com/macros/s/AKfycbxTfhWbuhE87MEIi7pDywDJhpLLrAt8KnU4OJR3t_wgLsIjPVR5Ea2F_PyLBVQisM69aA/exec";
 let currentQR = null;
 const USER = "utilisateur_1"; // à changer par appareil
 const VERSION = "1.1.2"; // augmente à chaque update
@@ -164,6 +164,7 @@ if ("serviceWorker" in navigator) {
 }
 
 log("App version " + VERSION);
+
 
 
 
